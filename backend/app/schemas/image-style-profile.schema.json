@@ -1,0 +1,539 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/image-style-profile.schema.json",
+  "title": "GenAI Image Style Profile (Upper Bound)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this style-profile schema (not the model). Example: 1.0.0"
+    },
+
+    "id": {
+      "type": "string",
+      "description": "Stable identifier for this style profile. Useful for caching and diffing."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-friendly name, e.g., 'Neo-Noir Cinematic', 'Hand-painted Impressionist'."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short summary of the intended look and feel."
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Search/filter tags, e.g., ['noir','cinematic','low-key']"
+    },
+
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "use_case": {
+          "type": "string",
+          "enum": [
+            "style_only",
+            "style_plus_prompt_template",
+            "postprocess_only",
+            "character_identity_style",
+            "brand_style_system"
+          ],
+          "description": "What this profile is meant to do."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "How strongly this style should override other instructions."
+        },
+        "strictness": {
+          "type": "string",
+          "enum": ["loose", "balanced", "strict"],
+          "description": "How much the generation should be constrained by this style profile."
+        }
+      }
+    },
+
+    "prompt_scaffolding": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional: how to expand this style JSON into a natural-language prompt or model-native syntax.",
+      "properties": {
+        "template": {
+          "type": "string",
+          "description": "Prompt template with placeholders like {{content}} {{style}}."
+        },
+        "style_to_text_rules": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Human-readable rules like: 'Always mention medium + lighting + palette first.'"
+        },
+        "token_budget": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "If you’re compressing style into a limited prompt window."
+        }
+      }
+    },
+
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "All the visual identity knobs.",
+      "properties": {
+        "aesthetic": {"$ref": "#/$defs/aesthetic"},
+        "palette": {"$ref": "#/$defs/palette"},
+        "lighting": {"$ref": "#/$defs/lighting"},
+        "composition": {"$ref": "#/$defs/composition"},
+        "camera": {"$ref": "#/$defs/camera"},
+        "materials": {"$ref": "#/$defs/materials"},
+        "rendering": {"$ref": "#/$defs/rendering"},
+        "postprocess": {"$ref": "#/$defs/postprocess"},
+        "typography": {"$ref": "#/$defs/typography"},
+        "consistency": {"$ref": "#/$defs/consistency"}
+      }
+    },
+
+    "references": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Reference images and other anchors (style refs, palette refs, pose refs).",
+      "properties": {
+        "images": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/reference_image"}
+        },
+        "text_anchors": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/text_anchor"},
+          "description": "Reusable phrases or descriptors that the model should treat as anchors."
+        },
+        "banned_references": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Names/phrases you never want used as stylistic refs."
+        }
+      }
+    },
+
+    "negative": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What to avoid. Keep it tight unless you enjoy fighting the model.",
+      "properties": {
+        "negative_prompt": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "artifact_avoidance": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "e.g., 'extra fingers', 'text', 'watermarks', 'AI artifacts'."
+        },
+        "style_avoidance": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "e.g., 'photorealistic skin pores', 'over-sharpening', 'plastic sheen'."
+        }
+      }
+    },
+
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Constraints on the output image.",
+      "properties": {
+        "aspect_ratio": {
+          "type": "string",
+          "description": "e.g., '1:1', '16:9', '4:5'."
+        },
+        "resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        },
+        "format": {
+          "type": "string",
+          "enum": ["png", "jpg", "webp"],
+          "description": "If your pipeline cares."
+        },
+        "background": {
+          "type": "string",
+          "enum": ["opaque", "transparent", "auto"],
+          "description": "Whether to request transparency when supported."
+        }
+      }
+    },
+
+    "engine_overrides": {
+      "type": "object",
+      "description": "Model/vendor-specific knobs (diffusion steps, cfg, samplers, seeds, etc.).",
+      "additionalProperties": true
+    },
+
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional: constraints for safe generation in your pipeline.",
+      "properties": {
+        "disallow": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Policy or domain-specific disallowed content categories."
+        },
+        "allowed_context": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "What is explicitly okay in your application context."
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "weighted_string": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {"type": "string"},
+        "weight": {"type": "number", "minimum": -5, "maximum": 5}
+      },
+      "required": ["value"]
+    },
+
+    "aesthetic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "style_name": {"type": "string"},
+        "movements": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/weighted_string"},
+          "description": "Art movements / genres, optionally weighted."
+        },
+        "medium": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/weighted_string"},
+          "description": "Oil, watercolor, ink, digital paint, 3D render, etc."
+        },
+        "technique": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/weighted_string"},
+          "description": "Brushwork, stippling, halftone, cel shading, impasto."
+        },
+        "mood": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/weighted_string"}
+        },
+        "era": {
+          "type": "string",
+          "description": "Optional era anchor (e.g., '1970s film still', '90s magazine')."
+        }
+      }
+    },
+
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["full_color", "limited_palette", "monochrome", "duotone", "grayscale"],
+          "description": "Overall palette regime."
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {"type": "string"},
+              "hex": {
+                "type": "string",
+                "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "dominant",
+                  "secondary",
+                  "accent",
+                  "background",
+                  "skin_tone",
+                  "highlight",
+                  "shadow",
+                  "line_art"
+                ]
+              },
+              "weight": {"type": "number", "minimum": 0, "maximum": 1}
+            },
+            "required": ["hex"]
+          },
+          "description": "Palette entries."
+        },
+        "contrast": {"type": "string", "enum": ["low", "medium", "high"]},
+        "saturation": {"type": "string", "enum": ["desaturated", "neutral", "vivid"]},
+        "temperature": {"type": "string", "enum": ["cool", "neutral", "warm", "mixed"]},
+        "harmonies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["complementary", "analogous", "triadic", "tetradic", "split_complementary"]
+          }
+        }
+      }
+    },
+
+    "lighting": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "setup": {
+          "type": "string",
+          "description": "Short description: 'soft key + rim', 'neon practicals', 'chiaroscuro'."
+        },
+        "time_of_day": {
+          "type": "string",
+          "description": "e.g., golden hour, blue hour, midnight."
+        },
+        "quality": {"type": "string", "enum": ["soft", "hard", "diffuse", "dramatic"]},
+        "direction": {
+          "type": "string",
+          "enum": ["front", "side", "back", "top", "under", "mixed"]
+        },
+        "effects": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/weighted_string"},
+          "description": "volumetric rays, bloom, haze, subsurface glow."
+        },
+        "shadow_style": {
+          "type": "string",
+          "enum": ["soft", "crisp", "high_contrast", "minimal"],
+          "description": "Shadow character."
+        }
+      }
+    },
+
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "framing": {
+          "type": "string",
+          "enum": ["close_up", "medium", "wide", "extreme_wide", "macro"],
+          "description": "High-level framing."
+        },
+        "layout_rules": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "rule of thirds, centered symmetry, leading lines, etc."
+        },
+        "perspective": {
+          "type": "string",
+          "enum": ["eye_level", "low_angle", "high_angle", "isometric", "top_down", "forced_perspective"]
+        },
+        "depth": {
+          "type": "string",
+          "enum": ["flat", "layered", "deep"],
+          "description": "How much depth staging the image should have."
+        },
+        "focus_subject_priority": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "If multiple subjects, define priority order for attention."
+        }
+      }
+    },
+
+    "camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "camera_type": {"type": "string", "description": "DSLR, phone camera, medium format, etc."},
+        "lens": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "focal_length_mm": {"type": "number", "minimum": 1},
+            "aperture_f": {"type": "number", "minimum": 0.1},
+            "lens_style": {
+              "type": "string",
+              "enum": ["wide", "standard", "telephoto", "fish_eye", "tilt_shift", "anamorphic", "macro"]
+            }
+          }
+        },
+        "depth_of_field": {"type": "string", "enum": ["shallow", "medium", "deep"]},
+        "motion": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "motion_blur": {"type": "boolean"},
+            "shutter_style": {"type": "string", "description": "Long exposure, frozen action, panning."}
+          }
+        },
+        "film_emulation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "stock": {"type": "string", "description": "e.g., Kodak Portra-like, Fuji Pro-like."},
+            "grain": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      }
+    },
+
+    "materials": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "surface_language": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/weighted_string"},
+          "description": "Texture/material phrases: brushed metal, linen, matte paper."
+        },
+        "realism_level": {
+          "type": "string",
+          "enum": ["stylized", "semi_real", "photoreal"],
+          "description": "Global material realism."
+        },
+        "line_work": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "thickness": {"type": "string", "enum": ["thin", "medium", "thick"]},
+            "color": {"type": "string"},
+            "style": {"type": "string", "description": "Ink, pencil, cel-outline, etching."}
+          }
+        }
+      }
+    },
+
+    "rendering": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "detail": {"type": "string", "enum": ["low", "medium", "high", "ultra"]},
+        "sharpness": {"type": "string", "enum": ["soft", "neutral", "crisp"]},
+        "noise": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "grain": {"type": "number", "minimum": 0, "maximum": 1},
+            "dither": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "dynamic_range": {
+          "type": "string",
+          "enum": ["flat", "standard", "hdr"],
+          "description": "Tone mapping feel."
+        }
+      }
+    },
+
+    "postprocess": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color_grading": {
+          "type": "string",
+          "description": "Overall grading direction: teal/orange, bleach bypass, pastel wash, etc."
+        },
+        "bloom": {"type": "number", "minimum": 0, "maximum": 1},
+        "vignette": {"type": "number", "minimum": 0, "maximum": 1},
+        "chromatic_aberration": {"type": "number", "minimum": 0, "maximum": 1},
+        "sharpening": {"type": "number", "minimum": 0, "maximum": 1},
+        "halation": {"type": "number", "minimum": 0, "maximum": 1},
+        "glow": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Only relevant if your pipeline allows text in images.",
+      "properties": {
+        "allow_text": {"type": "boolean"},
+        "font_style": {"type": "string", "description": "Sans, serif, handwritten, retro pixel, etc."},
+        "placement": {"type": "string", "description": "Top-left, centered, lower third, etc."},
+        "treatments": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Outline, drop shadow, embossed, neon, etc."
+        }
+      }
+    },
+
+    "consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Controls for repeatability and brand consistency.",
+      "properties": {
+        "seed": {"type": ["integer", "string"], "description": "Determinism handle if supported."},
+        "variation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "0 = as consistent as possible, 1 = freer variations."
+        },
+        "reference_strength_default": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Default weight applied to references unless overridden."
+        }
+      }
+    },
+
+    "reference_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "description": "Internal ID if you store images in a system."},
+        "url": {"type": "string", "description": "Public URL if applicable."},
+        "kind": {
+          "type": "string",
+          "enum": ["style", "palette", "lighting", "pose", "composition", "texture", "identity"]
+        },
+        "strength": {"type": "number", "minimum": 0, "maximum": 2},
+        "notes": {"type": "string"},
+        "region": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": {"type": "number", "minimum": 0, "maximum": 1},
+            "y": {"type": "number", "minimum": 0, "maximum": 1},
+            "w": {"type": "number", "minimum": 0, "maximum": 1},
+            "h": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "description": "Normalized crop box if you’re doing region-based references."
+        }
+      },
+      "anyOf": [
+        {"required": ["id"]},
+        {"required": ["url"]}
+      ]
+    },
+
+    "text_anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {"type": "string"},
+        "weight": {"type": "number", "minimum": -5, "maximum": 5},
+        "category": {
+          "type": "string",
+          "enum": ["style", "palette", "lighting", "camera", "composition", "materials", "postprocess"]
+        }
+      },
+      "required": ["text"]
+    }
+  }
+}
