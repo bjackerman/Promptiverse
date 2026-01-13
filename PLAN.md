@@ -1,48 +1,57 @@
-# Project Plan: GenAI Prompt Repo PWA
+# Plan for GenAI Prompt Repo PWA
 
-**Goal:** Build a complete MVP of a PWA-compatible GenAI prompt repository with a guided JSON style editor.
+1. *Initialize Frontend Project*
+   - Create `frontend/` directory using Vite (React + TypeScript).
+   - Install dependencies: `tailwindcss`, `shadcn/ui`, `react-hook-form`, `zod`, `@rjsf/core`, `zustand`, `lucide-react`, `vite-plugin-pwa`.
+   - Configure Tailwind CSS.
+   - Setup project structure (`src/components`, `src/pages`, `src/hooks`, `src/lib`).
 
-## 1. Backend Verification & Completion (Python/FastAPI)
-- [ ] **Verify Database Connection:** Check `backend/app/database.py` for correct Motor/MongoDB URL (Docker friendly).
-- [ ] **Verify Models:** Check `backend/app/models/prompt.py` and `backend/app/models/style_profile.py` against `req.md`.
-- [ ] **Implement Style Validation:** Ensure `backend/app/api/styles.py` implements JSON Schema validation using `image-schema.json`.
-- [ ] **Create Seed Script:** Create a script to seed the database with the 10 required style presets.
-- [ ] **Docker Check:** Ensure `backend/Dockerfile` and `docker-compose.yml` are correctly configured for the API.
+2. *Backend Implementation Check & Fix*
+   - Verify `backend/app/models/` for `Prompt` and `StyleProfile` models.
+   - Verify `backend/app/api/` for endpoints (`prompts.py`, `styles.py`).
+   - Ensure MongoDB connection in `backend/app/database.py` handles Docker connection string.
+   - Add `image-schema.json` to backend schemas if missing.
 
-## 2. Frontend Scaffolding (React/Vite)
-- [ ] **Initialize Project:** `npm create vite@latest frontend -- --template react-ts`.
-- [ ] **Install Dependencies:**
-    - UI: `tailwindcss postcss autoprefixer shadcn-ui lucide-react clsx tailwind-merge`
-    - Logic: `zustand react-hook-form @hookform/resolvers zod axios`
-    - Forms: `@rjsf/core @rjsf/utils @rjsf/validator-ajv8`
-    - PWA: `vite-plugin-pwa`
-- [ ] **Configure Tailwind:** `npx tailwindcss init -p`, configure `content` paths.
-- [ ] **Setup Directory Structure:** `components/ui`, `pages`, `hooks`, `lib`, `schemas`.
-- [ ] **Copy Schema:** Copy `image-schema.json` to `frontend/public/schemas/` (or `frontend/src/schemas/` if importing directly).
+3. *Implement Frontend Infrastructure*
+   - Setup API client (`src/lib/api.ts`) using `axios` or `fetch`.
+   - Setup global state using `zustand` (`usePrompts`, `useStyles`).
+   - Setup routing (`react-router-dom` or similar).
 
-## 3. Frontend Core Logic
-- [ ] **API Client:** Create `frontend/src/lib/api.ts` (Axios instance).
-- [ ] **State Management:** Create `frontend/src/hooks/usePrompts.ts` and `frontend/src/hooks/useStyles.ts` (Zustand).
-- [ ] **Schema Loader:** Utility to fetch/load `image-schema.json` for validation.
+4. *Implement Prompt Management (Frontend)*
+   - Create `PromptList` component with filters.
+   - Create `PromptForm` component for creating/editing prompts.
+   - Create `PromptDetail` view.
+   - Implement `Prompts.tsx` page.
 
-## 4. Feature Implementation
-- [ ] **Navigation/Layout:** Main App shell with navigation (Prompts, Styles).
-- [ ] **Prompt Management:**
-    - [ ] `PromptList` component (Grid/List view).
-    - [ ] `PromptForm` component (Create/Edit).
-    - [ ] Detail view with Style Profile summary.
-- [ ] **Style Management:**
-    - [ ] `StyleList` component.
-    - [ ] `GuidedStyleForm` (The "Key UX Feature").
-        - Implement tabs/accordion for schema sections.
-        - Map schema fields to UI controls (Sliders, Dropdowns, Chip inputs).
-        - Live JSON preview panel.
+5. *Implement Style Management (Frontend)*
+   - Create `StyleList` component.
+   - Create `StyleEditor` component.
+   - Implement `Styles.tsx` page.
 
-## 5. PWA & Deployment
-- [ ] **PWA Config:** Configure `vite.config.ts` with `VitePWA` plugin (manifest, icons, caching strategies).
-- [ ] **Service Worker:** Ensure offline caching for "last 50 prompts, 20 styles".
-- [ ] **Docker Compose:** Finalize `docker-compose.yml` to orchestrate Frontend (Nginx/Serve), Backend (Uvicorn), and Mongo.
+6. *Implement Guided Style Editor (Frontend)*
+   - Create `GuidedStyleForm.tsx` using `@rjsf/core` or custom form components mapping to `image-schema.json`.
+   - Implement sections: Intent, Aesthetic, Palette, etc.
+   - Add live JSON preview.
 
-## 6. Verification
-- [ ] **Manual Testing:** Walkthrough of all User Stories (Create Prompt, Edit Style, Offline check).
-- [ ] **Automated Checks:** Linting, Build check.
+7. *Docker Compose & Deployment*
+   - Verify `docker-compose.yml` serves frontend (port 3000), backend (port 8000), and MongoDB.
+   - Ensure correct networking between containers.
+
+8. *Data Seeding*
+   - Create a script (e.g., `backend/seed.py`) to insert the 10 style presets into MongoDB.
+   - Add a step in `docker-compose` or `main.py` to run seeding on startup if empty.
+
+9. *PWA & Offline Support*
+   - Configure `vite-plugin-pwa` in `frontend/vite.config.ts`.
+   - Implement service worker caching strategies.
+
+10. *Verification & Testing*
+    - Verify all acceptance criteria from `req.md`.
+    - Test "Create prompt → list → detail → edit → delete".
+    - Test "Create style → guided form → validate → save → list".
+    - Test "Attach style to image prompt → export merged JSON".
+    - Verify PWA installation audit.
+    - Run pre-commit checks.
+
+11. *Submit*
+    - Submit the changes.
