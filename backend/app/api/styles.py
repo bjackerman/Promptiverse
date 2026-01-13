@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import List, Optional
+from datetime import datetime
 from ..models.style_profile import StyleProfileModel, StyleProfileCreate
 from ..database import get_database
 from bson import ObjectId
@@ -120,5 +121,3 @@ async def validate_style(style_json: dict = Body(...)):
     except jsonschema.ValidationError as e:
         return {"valid": False, "errors": [e.message]}
 
-# Fix missing imports
-from datetime import datetime
